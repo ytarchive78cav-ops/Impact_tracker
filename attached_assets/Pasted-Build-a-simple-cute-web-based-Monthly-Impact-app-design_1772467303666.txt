@@ -1,0 +1,117 @@
+Build a simple, cute, web-based “Monthly Impact” app designed for exactly two people (David and Arlayna) to plan monthly donations and volunteering together, track what they did, and keep it emotionally meaningful and fun.
+
+Core concept
+- The app is a shared ritual: each month you press a single “Reveal” button and it selects either a donation or volunteering activity based on settings, tier weights, and your pool of causes.
+- The experience feels warm, playful, and lightweight, with a cute globe mascot character (a globe with eyes, like a friendly “Father Nature”) that reacts to progress and milestones.
+
+Users and scope
+- Only for two people, not a public product.
+- Two profiles exist: David and Arlayna. Each cause can be submitted by either person and keeps the “submitted by” identity.
+- A simple login is fine (shared passcode or two user passcodes), but keep it minimal since this is private.
+
+Cause and organization entries
+Each entry represents a cause or organization you might donate to or volunteer at. Each entry includes:
+- Name (organization or cause title)
+- Type: Donation or Volunteer (some entries can be “either” if you want to allow it, but donation vs volunteer should be supported)
+- Tier (three tiers):
+  - Tier 1: top priority
+  - Tier 2: secondary
+  - Tier 3: lower priority
+- “Submitted by” (David or Arlayna)
+- Short description: why it matters and why you chose it (personal meaning field)
+- Optional location (for local places)
+- Optional link (website or info)
+- Optional tags/categories (environment, mental health, animals, local community, etc.)
+- Optional photo (especially useful for volunteer places, but allow for either)
+
+Monthly selection and reveal flow
+- A main “Monthly Reveal” screen with a big button that triggers the selection for the current month.
+- The selection result is shown as a “reveal moment” that feels satisfying and cute.
+- The algorithm uses:
+  - Volunteer vs Donation frequency controlled by settings (example: volunteer 3 months/year, 6 months/year, etc.)
+  - Tier weighting so Tier 1 shows up more often than Tier 2, Tier 2 more than Tier 3
+  - Optional controls to tune how much more common each tier is (a simple weight per tier like 60/30/10 or similar)
+- The selection pool should only pull from entries that match the chosen month’s action type (donation vs volunteer), unless “either” entries exist.
+- Avoid repeating the exact same selection too frequently (light “recency” protection, like “do not repeat last month unless the pool is tiny”).
+- Once revealed, the app creates a “Monthly Activity” record for that month with the chosen cause and type, and it becomes the active item to complete.
+
+Completing the month
+After the reveal, the app supports logging completion:
+- If Donation:
+  - Enter amount donated (number)
+  - Enter date donated
+  - Optional note about how it felt or what you learned
+- If Volunteer:
+  - Enter hours volunteered
+  - Enter date volunteered
+  - Optional note about how it felt or what you learned
+  - Optional photo upload (a simple photo from the day)
+- Mark month as completed
+
+Tracking and dashboard
+A dashboard that shows impact over time with simple visuals:
+- Total money donated (lifetime)
+- Total volunteer hours (lifetime)
+- Breakdowns:
+  - Donation totals by month and year
+  - Volunteer hours by month and year
+  - Breakdown by tier (Tier 1 vs Tier 2 vs Tier 3 totals)
+  - Breakdown by category/tag (optional if tags exist)
+- “Top causes” sections:
+  - Most donated to
+  - Most volunteered for
+- A timeline or “Monthly Journal” list view:
+  - Each month shows the chosen cause, the completion status, amount/hours, date, and the personal note
+  - Thumbnails for uploaded photos where available
+- A feel-good “milestones” system:
+  - Examples: first volunteer month completed, 10 hours volunteered, $250 donated, $1,000 donated, 12 months of consistent action
+  - The globe mascot reacts when you hit milestones (happy, proud, little celebratory animation or message)
+
+Settings
+Settings allow tuning the experience:
+- Volunteer frequency per year (example options: 0, 3, 6, 9, 12 months/year)
+- Tier weights (editable so Tier 1 appears more often, Tier 3 less often)
+- Whether repeats are allowed within N months (basic toggle and a number)
+- Optional monthly donation target and volunteer hours target (just for display and motivation)
+- Optional “seasonal mode” (example: allow setting certain causes to be more likely in winter/holiday season)
+
+UI and UX style
+- The UI should feel cute, warm, and playful, but still clean and simple.
+- Visual identity includes:
+  - A friendly globe mascot with eyes (and small expressive reactions)
+  - Soft, welcoming colors and rounded components
+  - Clear “ritual” layout: a main home screen, a single big reveal button, and a simple completion form
+- Make it feel like a shared relationship ritual:
+  - Show “Submitted by David” or “Submitted by Arlayna” on causes
+  - The reveal screen can show a brief “why this matters to us” snippet after reveal (pulling from the stored personal meaning text)
+  - Keep friction low: fast navigation, minimal forms, everything mobile-friendly
+
+Pages / screens
+- Login (minimal)
+- Home (this month status + big Reveal button if not revealed yet)
+- Reveal result screen (cute reveal moment, cause details, and “Start this month”)
+- Completion screen (enter amount/hours, date, note, photo optional)
+- Causes library:
+  - Add new cause
+  - Edit cause
+  - List/filter by tier, type, submitted by, tag
+- Dashboard / Impact overview
+- Monthly Journal (history of months)
+- Settings
+
+Data and persistence
+- Persist everything so it works over time (causes, settings, monthly logs, totals).
+- Use a straightforward approach suitable for a small private app.
+- Include seed/demo data so the app looks populated immediately.
+
+Other practical notes
+- The app is intended to be used with a shared Google account in real life (not necessarily an app feature), so keep the app oriented around a shared experience and shared tracking.
+
+Deliverable
+- Generate the full working web app code in one shot in Replit:
+  - Clean project structure
+  - Mobile-friendly UI
+  - All the screens above
+  - Weighted monthly selection logic with volunteer vs donation frequency control and tier weighting
+  - Persistent storage
+  - Cute globe mascot presence throughout the UI with simple reactions to milestones and progress
