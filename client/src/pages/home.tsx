@@ -1,13 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Gift, Heart, Clock, DollarSign, CheckCircle2, ChevronRight, Sparkles, Trash2, Edit2, Plus, Star } from "lucide-react";
+import { Gift, Heart, Clock, DollarSign, CheckCircle2, ChevronRight, Sparkles, Trash2, Edit2, Plus, Star, MoreVertical } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { useMonthlyLog, useRevealMonthlyLog, useCompleteMonthlyLog, useDeleteMonthlyLog } from "@/hooks/use-monthly-logs";
 import { useCauses } from "@/hooks/use-causes";
 import { GlobeMascot } from "@/components/globe-mascot";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function getCurrentMonthKey() {
   const d = new Date();
@@ -117,11 +123,33 @@ export default function Home() {
 
           return (
             <Card key={log.id} className="p-6 md:p-8 rounded-[2rem] shadow-soft border border-border overflow-hidden relative">
-              {log.isCompleted && !isEditing && (
-                <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 rounded-bl-[1.5rem] font-bold text-xs flex items-center">
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
-                </div>
-              )}
+              <div className="absolute top-0 right-0 flex items-center">
+                {log.isCompleted && !isEditing && (
+                  <div className="bg-primary text-white px-4 py-1 rounded-bl-[1.5rem] font-bold text-xs flex items-center h-8">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
+                  </div>
+                )}
+                
+                {!isEditing && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-bl-xl text-muted-foreground hover:bg-muted">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => startEditing(log)}>
+                        <Edit2 className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => deleteMutation.mutate(log.id)} className="text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
 
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
@@ -131,14 +159,6 @@ export default function Home() {
                   <span className="px-3 py-1 bg-accent/20 text-accent-foreground font-bold rounded-full text-xs">
                     Tier {cause.tier}
                   </span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="icon" onClick={() => startEditing(log)} className="h-8 w-8 text-muted-foreground">
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(log.id)} className="h-8 w-8 text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
 
@@ -214,7 +234,9 @@ export default function Home() {
                     />
                     <div className="flex space-x-2">
                       <Button type="button" variant="outline" onClick={() => setEditingLogId(null)} className="flex-1 rounded-xl">Cancel</Button>
-                      <Button type="submit" className="flex-1 rounded-xl">Save</Button>
+                      <Button type="submit" className="flex-1 rounded-xl" disabled={completeMutation.isPending}>
+                        {completeMutation.isPending ? "Saving..." : "Save"}
+                      </Button>
                     </div>
                   </motion.form>
                 )}

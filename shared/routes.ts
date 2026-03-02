@@ -56,7 +56,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/monthly-logs/:monthKey' as const,
       responses: {
-        200: z.array(z.custom<typeof monthlyLogs.$inferSelect>()), // Changed to array
+        200: z.array(z.custom<typeof monthlyLogs.$inferSelect>()),
         404: errorSchemas.notFound,
       },
     },
