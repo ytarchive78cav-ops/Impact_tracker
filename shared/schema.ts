@@ -18,7 +18,7 @@ export const causes = pgTable("causes", {
 
 export const monthlyLogs = pgTable("monthly_logs", {
   id: serial("id").primaryKey(),
-  monthKey: text("month_key").notNull().unique(), // e.g. "2023-10"
+  monthKey: text("month_key").notNull(), // e.g. "2023-10" - No longer unique to allow multiple
   causeId: integer("cause_id").notNull(),
   type: text("type").notNull(), // 'donation', 'volunteer'
   isCompleted: boolean("is_completed").default(false),

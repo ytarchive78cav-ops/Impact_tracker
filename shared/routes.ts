@@ -56,7 +56,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/monthly-logs/:monthKey' as const,
       responses: {
-        200: z.custom<typeof monthlyLogs.$inferSelect>(),
+        200: z.array(z.custom<typeof monthlyLogs.$inferSelect>()), // Changed to array
         404: errorSchemas.notFound,
       },
     },
@@ -82,6 +82,14 @@ export const api = {
       responses: {
         200: z.custom<typeof monthlyLogs.$inferSelect>(),
         400: errorSchemas.validation,
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/monthly-logs/:id' as const,
+      responses: {
+        204: z.void(),
         404: errorSchemas.notFound,
       },
     },

@@ -93,23 +93,16 @@ export async function registerRoutes(
   });
 
   app.get(api.monthlyLogs.get.path, async (req, res) => {
-    const log = await storage.getMonthlyLogByMonth(req.params.monthKey);
-    if (!log) {
-      return res.status(404).json({ message: "Log not found" });
-    }
-    res.json(log);
+    const logs = await storage.getMonthlyLogByMonth(req.params.monthKey);
+    res.json(logs);
   });
 
   app.post(api.monthlyLogs.reveal.path, async (req, res) => {
     try {
       const { monthKey } = api.monthlyLogs.reveal.input.parse(req.body);
       
-      const existing = await storage.getMonthlyLogByMonth(monthKey);
-      if (existing) {
-        return res.status(201).json(existing);
-      }
-
-      // Simple algorithm: Random cause for now, considering real algo would be complex
+      // Removed "existing" check to allow multiple entries
+      
       const causes = await storage.getCauses();
       if (causes.length === 0) {
         return res.status(400).json({ message: "No causes available to reveal" });
@@ -159,6 +152,11 @@ export async function registerRoutes(
       }
       res.status(500).json({ message: "Internal server error" });
     }
+  });
+
+  app.delete(api.monthlyLogs.delete.path, async (req, res) => {
+    await storage.deleteMonthlyLog(Number(req.params.id));
+    res.status(204).end();
   });
 
   app.get(api.settings.get.path, async (req, res) => {

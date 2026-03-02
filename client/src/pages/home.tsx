@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Gift, Heart, Clock, DollarSign, CheckCircle2, ChevronRight } from "lucide-react";
+import { Gift, Heart, Clock, DollarSign, CheckCircle2, ChevronRight, Sparkles, Trash2, Edit2, Plus, Star } from "lucide-react";
 import { useUser } from "@/lib/user-context";
-import { useMonthlyLog, useRevealMonthlyLog, useCompleteMonthlyLog } from "@/hooks/use-monthly-logs";
+import { useMonthlyLog, useRevealMonthlyLog, useCompleteMonthlyLog, useDeleteMonthlyLog } from "@/hooks/use-monthly-logs";
 import { useCauses } from "@/hooks/use-causes";
 import { GlobeMascot } from "@/components/globe-mascot";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
-// Helper to get current YYYY-MM
 function getCurrentMonthKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -23,21 +24,20 @@ export default function Home() {
   const { activeUser } = useUser();
   const currentMonthKey = getCurrentMonthKey();
   
-  const { data: log, isLoading: logLoading } = useMonthlyLog(currentMonthKey);
+  const { data: logs, isLoading: logsLoading } = useMonthlyLog(currentMonthKey);
   const { data: causes, isLoading: causesLoading } = useCauses();
   
   const revealMutation = useRevealMonthlyLog();
+  const deleteMutation = useDeleteMonthlyLog();
   const completeMutation = useCompleteMonthlyLog();
 
   const [isRevealing, setIsRevealing] = useState(false);
-  const [showCompletionForm, setShowCompletionForm] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<number | null>(null);
 
-  // Form state
+  // Form state for editing/completing
   const [amount, setAmount] = useState("");
   const [hours, setHours] = useState("");
   const [note, setNote] = useState("");
-
-  const cause = log ? causes?.find(c => c.id === log.causeId) : null;
 
   const handleReveal = () => {
     setIsRevealing(true);
@@ -51,18 +51,16 @@ export default function Home() {
             origin: { y: 0.6 },
             colors: ['#4ADE80', '#FCD34D', '#F87171']
           });
-        }, 1500); // Faux loading for suspense
+        }, 1000);
       },
       onError: () => setIsRevealing(false)
     });
   };
 
-  const handleComplete = (e: React.FormEvent) => {
+  const handleComplete = (e: React.FormEvent, logId: number) => {
     e.preventDefault();
-    if (!log) return;
-    
     completeMutation.mutate({
-      id: log.id,
+      id: logId,
       data: {
         amount: amount ? Number(amount) : undefined,
         hours: hours ? Number(hours) : undefined,
@@ -71,7 +69,7 @@ export default function Home() {
       }
     }, {
       onSuccess: () => {
-        setShowCompletionForm(false);
+        setEditingLogId(null);
         confetti({
           particleCount: 100,
           spread: 60,
@@ -82,7 +80,14 @@ export default function Home() {
     });
   };
 
-  if (logLoading || causesLoading) {
+  const startEditing = (log: any) => {
+    setEditingLogId(log.id);
+    setAmount(log.amount || "");
+    setHours(log.hours || "");
+    setNote(log.note || "");
+  };
+
+  if (logsLoading || causesLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <GlobeMascot mood="neutral" size={80} />
@@ -90,221 +95,155 @@ export default function Home() {
     );
   }
 
-  // STATE 1: Ready to Reveal
-  if (!log) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center max-w-md mx-auto">
-        <motion.div 
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mb-12"
-        >
-          <div className="inline-flex items-center justify-center px-4 py-2 bg-primary/10 text-primary rounded-full font-bold text-sm mb-6">
-            {formatMonth(currentMonthKey)}
-          </div>
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
-            Time for this month's ritual!
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            {activeUser}, press the button below to draw a cause from your library.
-          </p>
-        </motion.div>
-
-        <motion.button
-          onClick={handleReveal}
-          disabled={isRevealing}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={`
-            relative w-48 h-48 md:w-56 md:h-56 rounded-full flex flex-col items-center justify-center shadow-bouncy
-            transition-all duration-500 overflow-hidden group
-            ${isRevealing ? 'bg-secondary' : 'bg-primary'}
-          `}
-        >
-          {isRevealing ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-              <Sparkles className="w-16 h-16 text-white" />
-            </motion.div>
-          ) : (
-            <>
-              <div className="absolute inset-0 bg-white/20 group-hover:translate-y-full transition-transform duration-700 rounded-full" />
-              <Gift className="w-16 h-16 text-white mb-2" />
-              <span className="text-white font-display font-bold text-xl">Reveal</span>
-            </>
-          )}
-        </motion.button>
-      </div>
-    );
-  }
-
-  // STATE 2: Revealed & Active (or Completed)
-  if (!cause) return <div>Error: Cause not found</div>;
-
-  const isCompleted = log.isCompleted;
-
   return (
-    <div className="max-w-2xl mx-auto pt-4 md:pt-10">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-8"
-      >
+    <div className="max-w-2xl mx-auto pt-4 md:pt-10 pb-20">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">
             {formatMonth(currentMonthKey)}
           </h1>
           <p className="text-muted-foreground font-medium">
-            Drawn by {cause.submittedBy}
+            Monthly Ritual
           </p>
         </div>
-        <GlobeMascot mood={isCompleted ? "happy" : "excited"} size={80} />
-      </motion.div>
+        <GlobeMascot mood={logs && logs.length > 0 ? "happy" : "neutral"} size={80} />
+      </div>
 
-      {/* Main Cause Card */}
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", delay: 0.1 }}
-        className="bg-card rounded-[2rem] p-6 md:p-8 shadow-soft border border-border relative overflow-hidden"
-      >
-        {isCompleted && (
-          <div className="absolute top-0 right-0 bg-primary text-white px-6 py-2 rounded-bl-[2rem] font-bold flex items-center shadow-sm">
-            <CheckCircle2 className="w-5 h-5 mr-2" /> Completed
-          </div>
-        )}
+      <div className="space-y-6">
+        {logs?.map((log) => {
+          const cause = causes?.find(c => c.id === log.causeId);
+          if (!cause) return null;
+          const isEditing = editingLogId === log.id;
 
-        <div className="flex items-center space-x-3 mb-6">
-          <span className="px-3 py-1 bg-secondary/20 text-secondary-foreground font-bold rounded-full text-sm capitalize">
-            {log.type}
-          </span>
-          <span className="px-3 py-1 bg-accent/20 text-accent-foreground font-bold rounded-full text-sm">
-            Tier {cause.tier}
-          </span>
-        </div>
-
-        <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-          {cause.name}
-        </h2>
-        
-        <p className="text-muted-foreground text-lg mb-8 leading-relaxed whitespace-pre-wrap">
-          {cause.description}
-        </p>
-
-        {cause.link && (
-          <a 
-            href={cause.link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-primary font-bold hover:underline mb-8"
-          >
-            Visit Website <ChevronRight className="w-4 h-4 ml-1" />
-          </a>
-        )}
-
-        {/* Action Area */}
-        {!isCompleted && !showCompletionForm && (
-          <button
-            onClick={() => setShowCompletionForm(true)}
-            className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-bouncy btn-cute flex items-center justify-center"
-          >
-            <CheckCircle2 className="w-6 h-6 mr-2" />
-            Mark as Completed
-          </button>
-        )}
-
-        <AnimatePresence>
-          {showCompletionForm && !isCompleted && (
-            <motion.form
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              onSubmit={handleComplete}
-              className="mt-6 border-t border-border pt-6 overflow-hidden"
-            >
-              <h3 className="font-display font-bold text-xl mb-4">Log your impact</h3>
-              
-              <div className="space-y-4">
-                {log.type === "donation" && (
-                  <div>
-                    <label className="block text-sm font-bold text-muted-foreground mb-2">Amount ($)</label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                      <input
-                        type="number"
-                        required
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                        className="w-full bg-input/50 border-2 border-transparent focus:border-primary rounded-xl py-3 pl-10 pr-4 outline-none font-bold transition-colors"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {log.type === "volunteer" && (
-                  <div>
-                    <label className="block text-sm font-bold text-muted-foreground mb-2">Hours Volunteered</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                      <input
-                        type="number"
-                        step="0.5"
-                        required
-                        value={hours}
-                        onChange={e => setHours(e.target.value)}
-                        className="w-full bg-input/50 border-2 border-transparent focus:border-primary rounded-xl py-3 pl-10 pr-4 outline-none font-bold transition-colors"
-                        placeholder="2.5"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-bold text-muted-foreground mb-2">Journal Note (optional)</label>
-                  <textarea
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    className="w-full bg-input/50 border-2 border-transparent focus:border-primary rounded-xl py-3 px-4 outline-none resize-none h-24 transition-colors"
-                    placeholder="How did it feel?"
-                  />
+          return (
+            <Card key={log.id} className="p-6 md:p-8 rounded-[2rem] shadow-soft border border-border overflow-hidden relative">
+              {log.isCompleted && !isEditing && (
+                <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 rounded-bl-[1.5rem] font-bold text-xs flex items-center">
+                  <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
                 </div>
+              )}
 
-                <div className="flex space-x-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCompletionForm(false)}
-                    className="flex-1 py-3 bg-muted text-foreground rounded-xl font-bold btn-cute"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={completeMutation.isPending}
-                    className="flex-1 py-3 bg-primary text-white rounded-xl font-bold shadow-bouncy btn-cute disabled:opacity-50 flex justify-center items-center"
-                  >
-                    {completeMutation.isPending ? "Saving..." : "Save Impact"}
-                  </button>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <span className="px-3 py-1 bg-secondary/20 text-secondary-foreground font-bold rounded-full text-xs capitalize">
+                    {log.type}
+                  </span>
+                  <span className="px-3 py-1 bg-accent/20 text-accent-foreground font-bold rounded-full text-xs">
+                    Tier {cause.tier}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Button variant="ghost" size="icon" onClick={() => startEditing(log)} className="h-8 w-8 text-muted-foreground">
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(log.id)} className="h-8 w-8 text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
 
-        {/* Completed State Info */}
-        {isCompleted && (
-          <div className="mt-6 bg-green-50 rounded-2xl p-4 flex items-start space-x-4 border border-green-100">
-            <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center flex-shrink-0 text-green-700">
-              <Heart className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="font-bold text-green-900 mb-1">Impact Logged</p>
-              {log.amount && <p className="text-green-800 text-sm font-medium">Donated: ${log.amount}</p>}
-              {log.hours && <p className="text-green-800 text-sm font-medium">Volunteered: {log.hours} hours</p>}
-              {log.note && <p className="text-green-700 text-sm mt-2 italic">"{log.note}"</p>}
-            </div>
-          </div>
-        )}
-      </motion.div>
+              <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+                {cause.name}
+              </h2>
+              <p className="text-muted-foreground text-sm mb-4 italic">Drawn by {cause.submittedBy}</p>
+              
+              {!isEditing && (
+                <>
+                  <p className="text-muted-foreground mb-6 line-clamp-3">{cause.description}</p>
+                  {!log.isCompleted ? (
+                    <Button onClick={() => startEditing(log)} className="w-full rounded-xl font-bold">
+                      <Plus className="w-4 h-4 mr-2" /> Log Progress
+                    </Button>
+                  ) : (
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                      <div className="flex items-center text-green-700 font-bold mb-1">
+                        <Heart className="w-4 h-4 mr-2" /> Impact Logged
+                      </div>
+                      <div className="text-sm text-green-800">
+                        {log.amount && <span>${log.amount} donated • </span>}
+                        {log.hours && <span>{log.hours} hours volunteered • </span>}
+                        <span className="text-xs">{new Date(log.dateCompleted!).toLocaleDateString()}</span>
+                      </div>
+                      {log.note && <p className="text-xs text-green-700 mt-2">"{log.note}"</p>}
+                    </div>
+                  )}
+                </>
+              )}
+
+              <AnimatePresence>
+                {isEditing && (
+                  <motion.form
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    onSubmit={(e) => handleComplete(e, log.id)}
+                    className="mt-4 border-t pt-4 space-y-4"
+                  >
+                    {log.type === "donation" && (
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <input
+                          type="number"
+                          required
+                          value={amount}
+                          onChange={e => setAmount(e.target.value)}
+                          className="w-full bg-muted/50 border-none rounded-xl py-2 pl-9 pr-4 text-sm font-bold"
+                          placeholder="Amount donated"
+                        />
+                      </div>
+                    )}
+                    {log.type === "volunteer" && (
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <input
+                          type="number"
+                          step="0.5"
+                          required
+                          value={hours}
+                          onChange={e => setHours(e.target.value)}
+                          className="w-full bg-muted/50 border-none rounded-xl py-2 pl-9 pr-4 text-sm font-bold"
+                          placeholder="Hours volunteered"
+                        />
+                      </div>
+                    )}
+                    <textarea
+                      value={note}
+                      onChange={e => setNote(e.target.value)}
+                      className="w-full bg-muted/50 border-none rounded-xl py-2 px-4 text-sm min-h-[80px]"
+                      placeholder="Optional notes..."
+                    />
+                    <div className="flex space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setEditingLogId(null)} className="flex-1 rounded-xl">Cancel</Button>
+                      <Button type="submit" className="flex-1 rounded-xl">Save</Button>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </Card>
+          );
+        })}
+
+        <div className="flex flex-col items-center pt-8">
+          <Button 
+            onClick={handleReveal} 
+            disabled={isRevealing}
+            size="lg"
+            className="rounded-full h-16 px-8 font-bold text-lg shadow-bouncy group"
+          >
+            {isRevealing ? (
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+                <Sparkles className="w-6 h-6" />
+              </motion.div>
+            ) : (
+              <>
+                <Gift className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
+                Reveal Another Cause
+              </>
+            )}
+          </Button>
+          <p className="text-muted-foreground text-xs mt-4">Add multiple entries for this month's impact!</p>
+        </div>
+      </div>
     </div>
   );
 }

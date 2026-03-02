@@ -29,10 +29,9 @@ export function useMonthlyLog(monthKey: string) {
     queryFn: async () => {
       const url = buildUrl(api.monthlyLogs.get.path, { monthKey });
       const res = await fetch(url, { credentials: "include" });
-      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch log");
       const data = await res.json();
-      return parseWithLogging<MonthlyLog>(api.monthlyLogs.get.responses[200], data, "monthlyLogs.get");
+      return parseWithLogging<MonthlyLog[]>(api.monthlyLogs.get.responses[200], data, "monthlyLogs.get");
     },
   });
 }
@@ -54,6 +53,7 @@ export function useRevealMonthlyLog() {
     onSuccess: (_, monthKey) => {
       queryClient.invalidateQueries({ queryKey: [api.monthlyLogs.get.path, monthKey] });
       queryClient.invalidateQueries({ queryKey: [api.monthlyLogs.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.stats.path] });
     },
   });
 }
@@ -74,6 +74,24 @@ export function useCompleteMonthlyLog() {
       });
       if (!res.ok) throw new Error("Failed to complete monthly log");
       return api.monthlyLogs.complete.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.monthlyLogs.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.stats.path] });
+    },
+  });
+}
+
+export function useDeleteMonthlyLog() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.monthlyLogs.delete.path, { id });
+      const res = await fetch(url, {
+        method: api.monthlyLogs.delete.method,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete monthly log");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.monthlyLogs.list.path] });

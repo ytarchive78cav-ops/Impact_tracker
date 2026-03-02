@@ -12,9 +12,10 @@ export interface IStorage {
 
   // Monthly Logs
   getMonthlyLogs(): Promise<MonthlyLog[]>;
-  getMonthlyLogByMonth(monthKey: string): Promise<MonthlyLog | undefined>;
+  getMonthlyLogByMonth(monthKey: string): Promise<MonthlyLog[]>;
   createMonthlyLog(log: InsertMonthlyLog): Promise<MonthlyLog>;
   updateMonthlyLog(id: number, log: Partial<MonthlyLog>): Promise<MonthlyLog>;
+  deleteMonthlyLog(id: number): Promise<void>;
 
   // Settings
   getSettings(): Promise<Settings>;
@@ -49,9 +50,8 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(monthlyLogs).orderBy(desc(monthlyLogs.monthKey));
   }
 
-  async getMonthlyLogByMonth(monthKey: string): Promise<MonthlyLog | undefined> {
-    const [log] = await db.select().from(monthlyLogs).where(eq(monthlyLogs.monthKey, monthKey));
-    return log;
+  async getMonthlyLogByMonth(monthKey: string): Promise<MonthlyLog[]> {
+    return await db.select().from(monthlyLogs).where(eq(monthlyLogs.monthKey, monthKey));
   }
 
   async createMonthlyLog(log: InsertMonthlyLog): Promise<MonthlyLog> {
@@ -62,6 +62,10 @@ export class DatabaseStorage implements IStorage {
   async updateMonthlyLog(id: number, log: Partial<MonthlyLog>): Promise<MonthlyLog> {
     const [updatedLog] = await db.update(monthlyLogs).set(log).where(eq(monthlyLogs.id, id)).returning();
     return updatedLog;
+  }
+
+  async deleteMonthlyLog(id: number): Promise<void> {
+    await db.delete(monthlyLogs).where(eq(monthlyLogs.id, id));
   }
 
   async getSettings(): Promise<Settings> {
