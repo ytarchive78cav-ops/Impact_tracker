@@ -1,30 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Settings, type InsertSettings } from "@shared/routes";
+import { storage } from "@/lib/local-storage";
+import { useUser } from "@/lib/user-context";
 
 export function useSettings() {
+  const { activeWorkspaceId } = useUser();
   return useQuery({
-    queryKey: [api.settings.get.path],
-    queryFn: async () => {
-      const res = await fetch(api.settings.get.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return api.settings.get.responses[200].parse(await res.json());
-    },
+    queryKey: [api.settings.get.path, activeWorkspaceId],
+    enabled: activeWorkspaceId !== null,
+    queryFn: async () => storage.getSettings(activeWorkspaceId!),
   });
 }
 
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
+  const { activeWorkspaceId } = useUser();
   return useMutation({
     mutationFn: async (updates: Partial<InsertSettings>) => {
-      const res = await fetch(api.settings.update.path, {
-        method: api.settings.update.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to update settings");
-      return api.settings.update.responses[200].parse(await res.json());
+      if (!activeWorkspaceId) {
+        throw new Error("Select a workspace first.");
+      }
+      return storage.updateSettings(activeWorkspaceId, updates);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.settings.get.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.settings.get.path, activeWorkspaceId] }),
   });
 }

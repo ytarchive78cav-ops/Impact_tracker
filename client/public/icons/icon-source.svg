@@ -1,0 +1,48 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="160" y1="112" x2="864" y2="912" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F7F7F4"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 360) rotate(90) scale(620)">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="globeGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(430 320) rotate(56.5) scale(610)">
+      <stop offset="0" stop-color="#D7F1FF"/>
+      <stop offset="1" stop-color="#93D8F6"/>
+    </radialGradient>
+    <linearGradient id="landGradient" x1="258" y1="260" x2="742" y2="776" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A9F0B3"/>
+      <stop offset="1" stop-color="#73D67F"/>
+    </linearGradient>
+    <linearGradient id="cheekGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDB8C3"/>
+      <stop offset="1" stop-color="#F796A8"/>
+    </linearGradient>
+    <clipPath id="globeClip">
+      <circle cx="512" cy="512" r="388"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bgGradient)"/>
+  <rect width="1024" height="1024" fill="url(#bgGlow)"/>
+
+  <circle cx="512" cy="512" r="388" fill="url(#globeGradient)"/>
+
+  <g clip-path="url(#globeClip)">
+    <path d="M258 446C282 326 378 270 496 308C562 332 594 400 566 474C534 558 430 616 316 590C272 580 244 524 258 446Z" fill="url(#landGradient)"/>
+    <path d="M596 248C704 216 794 250 822 338C846 414 822 468 742 472C636 478 568 410 596 248Z" fill="url(#landGradient)"/>
+    <path d="M498 648C592 588 716 608 774 712C804 766 780 826 692 842C564 866 446 790 498 648Z" fill="url(#landGradient)"/>
+    <path d="M178 412C220 282 338 196 474 188" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="34" stroke-linecap="round"/>
+    <ellipse cx="438" cy="268" rx="142" ry="88" fill="#FFFFFF" fill-opacity="0.12" transform="rotate(-18 438 268)"/>
+  </g>
+
+  <g transform="translate(512 530)">
+    <path d="M-142 -82C-122 -116 -84 -138 -44 -138C-10 -138 24 -120 48 -92" stroke="#1C1917" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M44 -92C68 -120 102 -138 136 -138C176 -138 214 -116 234 -82" stroke="#1C1917" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="-186" cy="-18" r="30" fill="url(#cheekGradient)" fill-opacity="0.7"/>
+    <circle cx="186" cy="-18" r="30" fill="url(#cheekGradient)" fill-opacity="0.7"/>
+    <path d="M-56 26C-30 74 30 74 56 26" stroke="#1C1917" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

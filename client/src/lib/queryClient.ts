@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { apiFetch } from "./user-context";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,14 +13,11 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
-
-  await throwIfResNotOk(res);
   return res;
 }
 
@@ -31,6 +29,12 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers: (() => {
+        const headers = new Headers();
+        const activeWorkspaceId = window.localStorage.getItem("impact-active-workspace-id");
+        if (activeWorkspaceId) headers.set("x-workspace-id", activeWorkspaceId);
+        return headers;
+      })(),
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
